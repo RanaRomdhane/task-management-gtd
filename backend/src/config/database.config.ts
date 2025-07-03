@@ -11,6 +11,6 @@ export const getDatabaseConfig = async (
   password: configService.get<string>('DB_PASSWORD'),
   database: configService.get<string>('DB_DATABASE'),
   entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-  synchronize: true, // Set to false in production
+  synchronize: true,
   logging: true,
 });

@@ -68,11 +68,11 @@ export class AiService {
       }
 
       try {
-        // First try to parse directly
+        
         const parsed = JSON.parse(content);
         return parsed;
       } catch (e) {
-        // If direct parse fails, try extracting from markdown
+        
         const jsonMatch = content.match(/```json\n([\s\S]*?)\n```/);
         if (jsonMatch) {
           return JSON.parse(jsonMatch[1]);
@@ -251,12 +251,11 @@ export class AiService {
   
       const response = await this.callGemini(prompt, systemMessage);
       
-      // Validate response
+      
       if (!response?.schedule || !Array.isArray(response.schedule)) {
         throw new Error('Invalid schedule format');
       }
   
-      // Map schedule back to tasks
       return response.schedule
         .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
         .map(item => {
