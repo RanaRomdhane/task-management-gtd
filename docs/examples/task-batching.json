@@ -1,0 +1,12 @@
+{
+    "title": "Generate Client Contracts",
+    "type": "WORK",
+    "priority": "HIGH",
+    "isBatchable": true,
+    "dependencies": [
+      {
+        "title": "Review Legal Template",
+        "type": "ADMIN"
+      }
+    ]
+  }
