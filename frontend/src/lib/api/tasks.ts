@@ -81,8 +81,13 @@ export interface CreateTaskGroupRequest {
   isBatch?: boolean
 }
 
+export interface UpdateTaskGroupRequest {
+  name?: string
+  description?: string
+  isBatch?: boolean
+}
+
 export const tasksApi = {
-  // Tasks
   getTasks: async (): Promise<Task[]> => {
     const response = await apiClient.get("/tasks")
     return response.data
@@ -112,7 +117,6 @@ export const tasksApi = {
     return response.data
   },
 
-  // AI Features
   batchSimilarTasks: async (): Promise<TaskGroup[]> => {
     const response = await apiClient.post("/tasks/batch")
     return response.data
@@ -133,29 +137,144 @@ export const tasksApi = {
     return response.data
   },
 
-  // Task Groups
   getTaskGroups: async (): Promise<TaskGroup[]> => {
-    const response = await apiClient.get("/tasks/groups")
-    return response.data
+    try {
+      const response = await apiClient.get("/tasks/groups")
+      const data = response.data
+      
+      if (!data) {
+        console.warn('No data received from server')
+        return []
+      }
+
+      const groups = Array.isArray(data) ? data : []
+      
+      return groups.map(group => ({
+        ...group,
+        tasks: Array.isArray(group.tasks) ? group.tasks : []
+      }))
+      
+    } catch (error: any) {
+      console.error('Error fetching task groups:', error)
+      throw new Error(
+        error.response?.data?.message || 
+        error.message || 
+        'Failed to fetch task groups'
+      )
+    }
   },
 
   deleteTaskGroup: async (groupId: number): Promise<void> => {
-    const response = await apiClient.delete(`/tasks/groups/${groupId}`);
-    return response.data;
+    try {
+      if (!groupId || isNaN(groupId)) {
+        throw new Error('Invalid group ID')
+      }
+      await apiClient.delete(`/tasks/groups/${groupId}`)
+    } catch (error: any) {
+      console.error('Error deleting group:', error)
+      throw error
+    }
+  },
+
+  updateTaskGroup: async (id: number, data: UpdateTaskGroupRequest): Promise<TaskGroup> => {
+    try {
+      if (!id || isNaN(id) || id <= 0) {
+        throw new Error('Invalid group ID')
+      }
+
+      const cleanData: UpdateTaskGroupRequest = {}
+      
+      if (data.name !== undefined && data.name.trim() !== '') {
+        cleanData.name = data.name.trim()
+      }
+      
+      if (data.description !== undefined) {
+        cleanData.description = data.description.trim() || undefined
+      }
+      
+      if (data.isBatch !== undefined) {
+        cleanData.isBatch = Boolean(data.isBatch)
+      }
+
+      console.log('Updating group with clean data:', { id, cleanData })
+      
+      const response = await apiClient.put(`/tasks/groups/${id}`, cleanData)
+      return response.data
+    } catch (error: any) {
+      console.error('Error updating task group:', error)
+      if (error.response?.status === 400) {
+        const errorMessage = error.response?.data?.message || 'Invalid data provided'
+        throw new Error(`Bad Request: ${errorMessage}`)
+      }
+      throw error
+    }
   },
 
   createTaskGroup: async (data: CreateTaskGroupRequest): Promise<TaskGroup> => {
-    const response = await apiClient.post("/tasks/groups", data)
-    return response.data
+    try {
+      const cleanData: CreateTaskGroupRequest = {
+        name: data.name.trim(),
+        isBatch: Boolean(data.isBatch || false)
+      }
+      
+      if (data.description !== undefined && data.description.trim() !== '') {
+        cleanData.description = data.description.trim()
+      }
+
+      console.log('Creating group with clean data:', cleanData)
+      
+      const response = await apiClient.post("/tasks/groups", cleanData)
+      return response.data
+    } catch (error: any) {
+      console.error('Error creating task group:', error)
+      if (error.response?.status === 400) {
+        const errorMessage = error.response?.data?.message || 'Invalid data provided'
+        throw new Error(`Bad Request: ${errorMessage}`)
+      }
+      throw error
+    }
   },
 
   addTaskToGroup: async (taskId: number, groupId: number): Promise<Task> => {
-    const response = await apiClient.put(`/tasks/${taskId}/groups/${groupId}`)
-    return response.data
+    try {
+      if (!taskId || isNaN(taskId) || taskId <= 0) {
+        throw new Error('Invalid task ID')
+      }
+      if (!groupId || isNaN(groupId) || groupId <= 0) {
+        throw new Error('Invalid group ID')
+      }
+      
+      console.log(`Adding task ${taskId} to group ${groupId}`)
+      
+      const response = await apiClient.put(`/tasks/${taskId}/groups/${groupId}`)
+      return response.data
+    } catch (error: any) {
+      console.error(`Error adding task ${taskId} to group ${groupId}:`, error)
+      if (error.response?.status === 400) {
+        const errorMessage = error.response?.data?.message || 'Invalid request'
+        throw new Error(`Bad Request: ${errorMessage}`)
+      }
+      throw error
+    }
   },
 
   removeTaskFromGroup: async (taskId: number): Promise<Task> => {
-    const response = await apiClient.delete(`/tasks/${taskId}/groups`)
-    return response.data
+    try {
+      if (!taskId || isNaN(taskId) || taskId <= 0) {
+        throw new Error('Invalid task ID')
+      }
+      
+      console.log(`Removing task ${taskId} from group`)
+      
+      const response = await apiClient.delete(`/tasks/${taskId}/groups`)
+      return response.data
+    } catch (error: any) {
+      console.error('Error removing task from group:', error)
+      if (error.response?.status === 400) {
+        const errorMessage = error.response?.data?.message || 'Invalid request'
+        throw new Error(`Bad Request: ${errorMessage}`)
+      }
+      throw error
+    }
   },
 }

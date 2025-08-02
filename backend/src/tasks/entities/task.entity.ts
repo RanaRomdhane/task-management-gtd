@@ -67,11 +67,15 @@ import {
     @Column()
     userId: number;
   
-    @ManyToOne(() => TaskGroup, (group) => group.tasks, { nullable: true })
-    group: TaskGroup;
-  
+    @ManyToOne(() => TaskGroup, (group) => group.tasks, { 
+      nullable: true,
+      onDelete: 'SET NULL' 
+    })
+    @JoinColumn({ name: 'groupId' })
+    group: TaskGroup | null;
+    
     @Column({ nullable: true })
-    groupId: number;
+    groupId: number | null;
   
     @ManyToMany(() => Task, (task) => task.id, { nullable: true })
     @JoinTable()
