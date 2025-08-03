@@ -551,183 +551,188 @@ export function TaskGroupsPage() {
           </Card>
         )}
 
-        {/* View Tasks Sheet */}
-        <Sheet open={isViewTasksOpen} onOpenChange={setIsViewTasksOpen}>
-          <SheetContent className="w-full sm:max-w-2xl p-0">
-            {viewingGroup && (
-              <div className="flex flex-col h-full">
-                <SheetHeader className="border-b p-6">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <FolderOpen className="h-6 w-6 text-blue-500" />
-                        <SheetTitle className="text-xl">{viewingGroup.name}</SheetTitle>
-                        {viewingGroup.isBatch && (
-                          <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700">
-                            <Zap className="h-3 w-3 mr-1" />
-                            AI Batch
-                          </Badge>
-                        )}
-                      </div>
-                      <SheetDescription className="text-sm">
-                        {viewingGroup.description || "No description provided"}
-                      </SheetDescription>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setIsViewTasksOpen(false)}
-                      className="h-8 w-8 p-0"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </SheetHeader>
-
-                <ScrollArea className="flex-1 px-6">
-                  <div className="space-y-6 py-6">
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                      {[
-                        { label: "Total", value: getGroupStats(viewingGroup).total, icon: Users, color: "blue" },
-                        { label: "Completed", value: getGroupStats(viewingGroup).completed, icon: CheckCircle2, color: "green" },
-                        { label: "In Progress", value: getGroupStats(viewingGroup).inProgress, icon: Clock, color: "orange" },
-                        { label: "High Priority", value: getGroupStats(viewingGroup).highPriority, icon: Target, color: "red" },
-                      ].map((stat) => (
-                        <Card key={stat.label} className="p-3">
-                          <div className="flex items-center gap-2">
-                            <div className={`p-2 rounded-lg bg-${stat.color}-50`}>
-                              <stat.icon className={`h-4 w-4 text-${stat.color}-600`} />
-                            </div>
-                            <div>
-                              <p className="text-lg font-bold">{stat.value}</p>
-                              <p className="text-xs text-muted-foreground">{stat.label}</p>
-                            </div>
-                          </div>
-                        </Card>
-                      ))}
-                    </div>
-
-                    {getGroupStats(viewingGroup).total > 0 && (
-                      <Card className="p-4">
-                        <div className="space-y-2">
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm font-medium">Progress</span>
-                            <span className="text-sm font-bold">{getGroupStats(viewingGroup).completionRate.toFixed(1)}%</span>
-                          </div>
-                          <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div
-                              className="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full"
-                              style={{ width: `${getGroupStats(viewingGroup).completionRate}%` }}
-                            />
-                          </div>
-                        </div>
-                      </Card>
-                    )}
-
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-semibold">Tasks</h3>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="text-xs">
-                            {getGroupStats(viewingGroup).total} total
-                          </Badge>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleAddTasksToGroup(viewingGroup.id)}
-                          >
-                            <Plus className="h-4 w-4 mr-2" />
-                            Add Tasks
-                          </Button>
-                        </div>
-                      </div>
-
-                      {viewingGroup.tasks?.length > 0 ? (
-                        <div className="space-y-2">
-                          {viewingGroup.tasks.map((task) => (
-                            <Card key={task.id} className="p-4 hover:shadow-sm transition-shadow">
-                              <div className="space-y-2">
-                                <div className="flex items-start justify-between gap-2">
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                      <span className="text-sm">{getTypeIcon(task.type)}</span>
-                                      <h4 className="text-sm font-medium text-black truncate">{task.title}</h4>
-                                      <Badge className={`text-xs ${getPriorityColor(task.priority)}`}>
-                                        {task.priority}
-                                      </Badge>
-                                    </div>
-                                    {task.description && (
-                                      <p className="text-xs text-muted-foreground line-clamp-2">
-                                        {task.description}
-                                      </p>
-                                    )}
-                                  </div>
-                                  <Badge className={`text-xs ${getStatusColor(task.status)}`}>
-                                    {task.status.replace('_', ' ')}
-                                  </Badge>
-                                </div>
-
-                                <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                                  {task.dueDate && (
-                                    <div className="flex items-center gap-1">
-                                      <Calendar className="h-3 w-3" />
-                                      <span>Due {formatDate(task.dueDate)}</span>
-                                    </div>
-                                  )}
-                                  {task.estimatedDuration && (
-                                    <div className="flex items-center gap-1">
-                                      <Clock className="h-3 w-3" />
-                                      <span>{formatDuration(task.estimatedDuration)}</span>
-                                    </div>
-                                  )}
-                                  <span className="ml-auto">#{task.id}</span>
-                                </div>
-                              </div>
-                            </Card>
-                          ))}
-                        </div>
-                      ) : (
-                        <Card className="p-6">
-                          <div className="text-center">
-                            <FolderOpen className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-                            <h4 className="font-medium mb-2">No tasks in this group</h4>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => handleAddTasksToGroup(viewingGroup.id)}
-                            >
-                              <Plus className="h-4 w-4 mr-2" />
-                              Add Tasks
-                            </Button>
-                          </div>
-                        </Card>
-                      )}
-                    </div>
-                  </div>
-                </ScrollArea>
-
-                <div className="border-t p-4 flex justify-between gap-2">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => handleEditGroup(viewingGroup)}
-                    size="sm"
-                  >
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit
-                  </Button>
-                  <Button 
-                    variant="destructive" 
-                    onClick={() => handleDeleteGroup(viewingGroup.id)}
-                    size="sm"
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete
-                  </Button>
-                </div>
+{/* View Tasks Sheet */}
+<Sheet open={isViewTasksOpen} onOpenChange={setIsViewTasksOpen}>
+  <SheetContent className="w-full sm:max-w-2xl p-0 flex flex-col h-full">
+    {viewingGroup && (
+      <>
+        <SheetHeader className="border-b p-6 bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <FolderOpen className="h-6 w-6 text-blue-500" />
+                <SheetTitle className="text-xl">{viewingGroup.name}</SheetTitle>
+                {viewingGroup.isBatch && (
+                  <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-200">
+                    <Zap className="h-3 w-3 mr-1" />
+                    AI Batch
+                  </Badge>
+                )}
               </div>
+              <SheetDescription className="text-sm">
+                {viewingGroup.description || "No description provided"}
+              </SheetDescription>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsViewTasksOpen(false)}
+              className="h-8 w-8 p-0"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </SheetHeader>
+
+        <div className="flex-1 flex flex-col min-h-0">
+          <div className="p-6 space-y-6 flex-shrink-0">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {[
+                { label: "Total", value: getGroupStats(viewingGroup).total, icon: Users, color: "blue" },
+                { label: "Completed", value: getGroupStats(viewingGroup).completed, icon: CheckCircle2, color: "green" },
+                { label: "In Progress", value: getGroupStats(viewingGroup).inProgress, icon: Clock, color: "orange" },
+                { label: "High Priority", value: getGroupStats(viewingGroup).highPriority, icon: Target, color: "red" },
+              ].map((stat) => (
+                <Card key={stat.label} className="p-3">
+                  <div className="flex items-center gap-2">
+                    <div className={`p-2 rounded-lg bg-${stat.color}-50 dark:bg-${stat.color}-900`}>
+                      <stat.icon className={`h-4 w-4 text-${stat.color}-600 dark:text-${stat.color}-300`} />
+                    </div>
+                    <div>
+                      <p className="text-lg font-bold">{stat.value}</p>
+                      <p className="text-xs text-muted-foreground">{stat.label}</p>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+
+            {getGroupStats(viewingGroup).total > 0 && (
+              <Card className="p-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">Progress</span>
+                    <span className="text-sm font-bold">{getGroupStats(viewingGroup).completionRate.toFixed(1)}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                    <div
+                      className="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full"
+                      style={{ width: `${getGroupStats(viewingGroup).completionRate}%` }}
+                    />
+                  </div>
+                </div>
+              </Card>
             )}
-          </SheetContent>
-        </Sheet>
+          </div>
+
+          <div className="px-6 pb-6 flex-1 flex flex-col min-h-0">
+            <div className="flex items-center justify-between mb-4 flex-shrink-0">
+              <h3 className="text-lg font-semibold">Tasks</h3>
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="text-xs">
+                  {getGroupStats(viewingGroup).total} total
+                </Badge>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handleAddTasksToGroup(viewingGroup.id)}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Tasks
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex-1 min-h-0 rounded-lg border">
+              <ScrollArea className="h-full">
+                <div className="divide-y">
+                  {viewingGroup.tasks?.length > 0 ? (
+                    viewingGroup.tasks.map((task) => (
+                      <div 
+                        key={task.id} 
+                        className="p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                      >
+                        <div className="space-y-2">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                <span className="text-sm">{getTypeIcon(task.type)}</span>
+                                <h4 className="text-sm font-medium truncate">{task.title}</h4>
+                                <Badge className={`text-xs ${getPriorityColor(task.priority)}`}>
+                                  {task.priority}
+                                </Badge>
+                              </div>
+                              {task.description && (
+                                <p className="text-sm text-muted-foreground line-clamp-2">
+                                  {task.description}
+                                </p>
+                              )}
+                            </div>
+                            <Badge className={`text-xs ${getStatusColor(task.status)}`}>
+                              {task.status.replace('_', ' ')}
+                            </Badge>
+                          </div>
+
+                          <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                            {task.dueDate && (
+                              <div className="flex items-center gap-1">
+                                <Calendar className="h-3 w-3" />
+                                <span>Due {formatDate(task.dueDate)}</span>
+                              </div>
+                            )}
+                            {task.estimatedDuration && (
+                              <div className="flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                <span>{formatDuration(task.estimatedDuration)}</span>
+                              </div>
+                            )}
+                            <span className="ml-auto">#{task.id}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="p-6 text-center">
+                      <FolderOpen className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+                      <h4 className="font-medium mb-2">No tasks in this group</h4>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleAddTasksToGroup(viewingGroup.id)}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Tasks
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+            </div>
+          </div>
+        </div>
+
+        <div className="border-t p-4 flex justify-between gap-2 flex-shrink-0">
+          <Button 
+            variant="outline" 
+            onClick={() => handleEditGroup(viewingGroup)}
+            size="sm"
+          >
+            <Edit className="h-4 w-4 mr-2" />
+            Edit
+          </Button>
+          <Button 
+            variant="destructive" 
+            onClick={() => handleDeleteGroup(viewingGroup.id)}
+            size="sm"
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete
+          </Button>
+        </div>
+      </>
+    )}
+  </SheetContent>
+</Sheet>
 
         {/* Edit Group Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>

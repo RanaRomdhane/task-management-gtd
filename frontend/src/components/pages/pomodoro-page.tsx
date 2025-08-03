@@ -21,7 +21,7 @@ interface PomodoroSession {
 
 export function PomodoroPage() {
   const [currentSession, setCurrentSession] = useState<PomodoroSession | null>(null)
-  const [timeLeft, setTimeLeft] = useState(25 * 60) // 25 minutes in seconds
+  const [timeLeft, setTimeLeft] = useState(35 * 60) // Changed to 35 minutes in seconds
   const [isActive, setIsActive] = useState(false)
   const [sessionType, setSessionType] = useState<"work" | "break">("work")
   const [completedSessions, setCompletedSessions] = useState<PomodoroSession[]>([])
@@ -51,7 +51,7 @@ export function PomodoroPage() {
         .slice(0, 5)
         .map((task) => ({
           ...task,
-          pomodoroCount: Math.ceil((task.estimatedDuration || 30) / 25) || 1,
+          pomodoroCount: Math.ceil((task.estimatedDuration || 30) / 35) || 1, // Changed to 35 minutes
         }))
       setPomodoroSchedule(fallbackSchedule)
       toast.success(`Using fallback schedule with ${fallbackSchedule.length} tasks`)
@@ -92,7 +92,7 @@ export function PomodoroPage() {
     } else {
       // Break completed, ready for next work session
       setSessionType("work")
-      setTimeLeft(25 * 60)
+      setTimeLeft(35 * 60) // Changed to 35 minutes
       setCurrentSession(null)
       toast.success("Break over! Ready for the next task.")
     }
@@ -108,7 +108,7 @@ export function PomodoroPage() {
 
   const resetTimer = () => {
     setIsActive(false)
-    setTimeLeft(sessionType === "work" ? 25 * 60 : 5 * 60)
+    setTimeLeft(sessionType === "work" ? 35 * 60 : 5 * 60) // Changed to 35 minutes
   }
 
   const startTaskSession = (task: Task & { pomodoroCount?: number }) => {
@@ -119,11 +119,11 @@ export function PomodoroPage() {
     setCurrentSession({
       taskId: task.id,
       taskTitle: task.title,
-      duration: 25,
+      duration: 35, // Changed to 35 minutes
       completed: false,
     })
     setSessionType("work")
-    setTimeLeft(25 * 60)
+    setTimeLeft(35 * 60) // Changed to 35 minutes
     setIsActive(false)
     toast.success(`Selected task: ${task.title}`)
   }
@@ -142,10 +142,6 @@ export function PomodoroPage() {
   const completedSessionsCount = completedSessions.length
   const progressPercentage = totalSessions > 0 ? (completedSessionsCount / totalSessions) * 100 : 0
 
-  // Debug logging
-  console.log("Pomodoro Schedule:", pomodoroSchedule)
-  console.log("All Tasks:", allTasks)
-
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -162,7 +158,7 @@ export function PomodoroPage() {
             <CardHeader className="text-center">
               <CardTitle className="flex items-center justify-center space-x-2">
                 <Timer className="h-6 w-6" />
-                <span>{sessionType === "work" ? "Work Session" : "Break Time"}</span>
+                <span>{sessionType === "work" ? "Work Session (35 min)" : "Break Time (5 min)"}</span>
               </CardTitle>
               {currentSession && (
                 <CardDescription className="text-lg font-medium">{currentSession.taskTitle}</CardDescription>
@@ -179,8 +175,8 @@ export function PomodoroPage() {
                     }`}
                     style={{
                       width: `${
-                        (((sessionType === "work" ? 25 * 60 : 5 * 60) - timeLeft) /
-                          (sessionType === "work" ? 25 * 60 : 5 * 60)) *
+                        (((sessionType === "work" ? 35 * 60 : 5 * 60) - timeLeft) /
+                          (sessionType === "work" ? 35 * 60 : 5 * 60)) *
                         100
                       }%`,
                     }}
@@ -248,7 +244,7 @@ export function PomodoroPage() {
                 </div>
                 <div className="space-y-1">
                   <p className="text-2xl font-bold text-green-500">
-                    {Math.floor((completedSessionsCount * 25) / 60)}h {(completedSessionsCount * 25) % 60}m
+                    {Math.floor((completedSessionsCount * 35) / 60)}h {(completedSessionsCount * 35) % 60}m
                   </p>
                   <p className="text-xs text-muted-foreground">Time Focused</p>
                 </div>

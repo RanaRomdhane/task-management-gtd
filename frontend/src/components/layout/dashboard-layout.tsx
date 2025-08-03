@@ -5,7 +5,7 @@ import type React from "react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Menu, Home, CheckSquare, Users, Brain, Clock, Settings, LogOut, Moon, Sun } from "lucide-react"
+import { Menu, Home, CheckSquare, Users, Brain, Clock, Settings, LogOut, Moon, Sun, Calendar } from "lucide-react"
 import { useAuth } from "@/components/providers/auth-provider"
 import { useTheme } from "next-themes"
 import Link from "next/link"
@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils"
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: Home },
   { name: "Tasks", href: "/dashboard/tasks", icon: CheckSquare },
+  { name: "Calendar", href: "/dashboard/calendar", icon: Calendar }, 
   { name: "Groups", href: "/dashboard/groups", icon: Users },
   { name: "AI Features", href: "/dashboard/ai", icon: Brain },
   { name: "Pomodoro", href: "/dashboard/pomodoro", icon: Clock },

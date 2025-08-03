@@ -7,7 +7,7 @@ import { TasksModule } from './tasks/tasks.module';
 import { getDatabaseConfig } from './config/database.config';
 import { ScheduleModule } from '@nestjs/schedule';
 import configuration from './config/configuration';
-
+import { CalendarModule } from './calendar/calendar.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -24,6 +24,7 @@ import configuration from './config/configuration';
     AuthModule,
     UsersModule,
     TasksModule,
+    CalendarModule
   ],
 })
 export class AppModule {}

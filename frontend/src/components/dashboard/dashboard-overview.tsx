@@ -5,13 +5,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { CheckCircle, Clock, AlertTriangle, TrendingUp, Brain, Users, Zap, Plus } from "lucide-react"
+import { CheckCircle, Clock, AlertTriangle, TrendingUp, Brain, Users, Zap, Plus, Calendar as CalendarIcon } from "lucide-react"
 import { tasksApi, TaskStatus, TaskPriority } from "@/lib/api/tasks"
-import { format } from "date-fns"
+import { calendarApi } from "@/lib/api/calendar"
+import { format, isToday, startOfDay, endOfDay } from "date-fns"
 import Link from "next/link"
+import { MiniCalendarWidget } from "@/components/calendar/mini-calendar-widget"
 
 export function DashboardOverview() {
-  const { data: tasks = [], isLoading } = useQuery({
+  const { data: tasks = [], isLoading: tasksLoading } = useQuery({
     queryKey: ["tasks"],
     queryFn: tasksApi.getTasks,
   })
@@ -21,7 +23,71 @@ export function DashboardOverview() {
     queryFn: tasksApi.getTaskGroups,
   })
 
-  if (isLoading) {
+  const { data: connectionStatus } = useQuery({
+    queryKey: ["calendar-status"],
+    queryFn: calendarApi.getConnectionStatus,
+  })
+
+  const { data: todaysEvents = [] } = useQuery({
+    queryKey: ["todays-events"],
+    queryFn: () => {
+      const today = new Date()
+      const todayStart = startOfDay(today)
+      const todayEnd = endOfDay(today)
+      
+      console.log('Fetching events for today:', {
+        start: todayStart,
+        end: todayEnd,
+        startISO: todayStart.toISOString(),
+        endISO: todayEnd.toISOString()
+      })
+      
+      return calendarApi.getEvents({
+        startDate: todayStart,
+        endDate: todayEnd
+      })
+    },
+    enabled: connectionStatus?.connected === true,
+    retry: 3,
+    retryDelay: 1000,
+  })
+
+  // Alternative query to get all events and filter client-side as fallback
+  const { data: allEvents = [] } = useQuery({
+    queryKey: ["all-events-fallback"],
+    queryFn: () => {
+      const today = new Date()
+      const monthStart = new Date(today.getFullYear(), today.getMonth(), 1)
+      const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0)
+      
+      return calendarApi.getEvents({
+        startDate: monthStart,
+        endDate: monthEnd
+      })
+    },
+    enabled: connectionStatus?.connected === true && todaysEvents.length === 0,
+  })
+
+  // Filter today's events from all events as fallback
+  const filteredTodaysEvents = allEvents.filter(event => {
+    const eventDate = new Date(event.startTime)
+    return isToday(eventDate)
+  })
+
+  // Use the primary today's events or fallback to filtered events
+  const finalTodaysEvents = todaysEvents.length > 0 ? todaysEvents : filteredTodaysEvents
+
+  console.log('Calendar data:', {
+    connectionStatus,
+    todaysEventsCount: todaysEvents.length,
+    allEventsCount: allEvents.length,
+    filteredTodaysEventsCount: filteredTodaysEvents.length,
+    finalTodaysEventsCount: finalTodaysEvents.length,
+    todaysEvents: todaysEvents,
+    filteredEvents: filteredTodaysEvents
+  })
+
+  if (tasksLoading) {
     return (
       <div className="space-y-6">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -85,7 +151,6 @@ export function DashboardOverview() {
           </Link>
         </div>
       </div>
-
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
@@ -123,12 +188,14 @@ export function DashboardOverview() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Completion Rate</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Today's Events</CardTitle>
+            <CalendarIcon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{completionRate.toFixed(1)}%</div>
-            <Progress value={completionRate} className="mt-2" />
+            <div className="text-2xl font-bold">{finalTodaysEvents.length}</div>
+            <p className="text-xs text-muted-foreground">
+              {connectionStatus?.connected ? "Calendar synced" : "Not connected"}
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -176,24 +243,24 @@ export function DashboardOverview() {
         <Card className="border-green-200 dark:border-green-800">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
-              <Clock className="h-5 w-5 text-green-500" />
-              <span>Pomodoro Schedule</span>
+              <CalendarIcon className="h-5 w-5 text-green-500" />
+              <span>Calendar Integration</span>
             </CardTitle>
-            <CardDescription>Get an AI-optimized Pomodoro schedule for maximum productivity.</CardDescription>
+            <CardDescription>Sync tasks with Google Calendar for better time management.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Link href="/dashboard/pomodoro">
+            <Link href="/dashboard/calendar">
               <Button variant="outline" className="w-full bg-transparent">
-                <Clock className="h-4 w-4 mr-2" />
-                Generate Schedule
+                <CalendarIcon className="h-4 w-4 mr-2" />
+                Manage Calendar
               </Button>
             </Link>
           </CardContent>
         </Card>
       </div>
 
-      {/* Priority Breakdown & Recent Tasks */}
-      <div className="grid gap-6 md:grid-cols-2">
+      {/* Main Content Grid */}
+      <div className="grid gap-6 md:grid-cols-3">
         {/* Priority Breakdown */}
         <Card>
           <CardHeader>
@@ -268,6 +335,9 @@ export function DashboardOverview() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Mini Calendar Widget */}
+        <MiniCalendarWidget className="h-fit" />
       </div>
 
       {/* Upcoming Tasks */}
@@ -312,6 +382,58 @@ export function DashboardOverview() {
                           ? "Due Soon"
                           : "Upcoming"}
                     </Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Today's Calendar Events */}
+      {connectionStatus?.connected && finalTodaysEvents.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <CalendarIcon className="h-5 w-5" />
+              <span>Today's Calendar Events</span>
+            </CardTitle>
+            <CardDescription>Your scheduled events for today</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {finalTodaysEvents.map((event) => (
+                <div key={event.id} className="flex items-center justify-between p-3 rounded-lg border">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{event.title}</p>
+                    <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+                      {!event.isAllDay && (
+                        <>
+                          <Clock className="h-3 w-3" />
+                          <span>
+                            {format(new Date(event.startTime), "h:mm a")} - {format(new Date(event.endTime), "h:mm a")}
+                          </span>
+                        </>
+                      )}
+                      {event.location && (
+                        <>
+                          {!event.isAllDay && <span>•</span>}
+                          <span>{event.location}</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    {event.task && (
+                      <Badge variant="outline" className="text-xs">
+                        Task Linked
+                      </Badge>
+                    )}
+                    {event.isAllDay && (
+                      <Badge variant="secondary" className="text-xs">
+                        All Day
+                      </Badge>
+                    )}
                   </div>
                 </div>
               ))}
