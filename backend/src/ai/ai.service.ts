@@ -176,7 +176,7 @@ export class AiService {
   async prioritizeTasks(tasks: Task[]): Promise<Task[]> {
     try {
       const systemMessage = `You are a task prioritization assistant. Analyze the following tasks and return them with updated priorities (CRITICAL, HIGH, MEDIUM, LOW).
-        Consider due dates, task types, and current priorities. Return a JSON array with each item having "id" and "priority" fields.`;
+        Consider due dates, task types, and current priorities. Return a JSON object with a "tasks" field containing an array of objects with "id" and "priority" fields.`;
       
       const prompt = `Tasks to prioritize: ${JSON.stringify(tasks.map(task => ({
         id: task.id,
@@ -186,12 +186,17 @@ export class AiService {
         currentPriority: task.priority,
         dueDate: task.dueDate,
       })))}`;
-
+  
       const response = await this.callGemini(prompt, systemMessage);
-      const parsedResponse = JSON.parse(response);
+      
+      // Response is already parsed by callGemini, no need to parse again
+      if (!response || !response.tasks || !Array.isArray(response.tasks)) {
+        console.warn('Invalid response format from AI service, using fallback');
+        return this.fallbackPrioritization(tasks);
+      }
       
       return tasks.map(task => {
-        const updatedTask = parsedResponse.tasks.find(t => t.id === task.id);
+        const updatedTask = response.tasks.find(t => t.id === task.id);
         return {
           ...task,
           priority: updatedTask?.priority || task.priority,
